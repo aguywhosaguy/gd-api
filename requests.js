@@ -10,7 +10,6 @@ async function request(url, data) {
         body: new URLSearchParams(data)
     })
     let text = await response.text()
-    console.log(text)
     return text
 }
 
@@ -28,9 +27,7 @@ async function songinfo(songid) {
         return {code: 400, payload: {message: "Song not found"}}
     } else {
         values = values + "~|~"
-        console.log(values)
         values = splitter(values, "~|~")
-        console.log(values)
         let payload = {}
         payload['songID'] = parseInt(songid)
         payload['songName'] = values[2]
@@ -567,9 +564,9 @@ async function comment(username, password, comment, levelID, percent) {
     console.log(data)
     let values = await request('http://www.boomlings.com/database/uploadGJComment21.php', data)
     if (parseInt(values) == -1) {
-        return {code: 400, payload: {message: "Invalid request"}}
+        return {code: 400, payload: "Invalid request"}
     } else {
-        return {code: 201, payload: {message: "Comment uploaded"}}
+        return {code: 201, payload: values}
     }
 }
 async function profileComment(username, password, comment) {
@@ -589,10 +586,52 @@ async function profileComment(username, password, comment) {
     let values = await request('http://www.boomlings.com/database/uploadGJAccComment20.php', data)
     console.log("load" + values)
     if (parseInt(values) == -1) {
-        return {code: 400, payload: {message: "Invalid request"}}
+        return {code: 400, payload: "Invalid request"}
     } else {
-        return {code: 201, payload: {message: "Comment uploaded"}}
+        return {code: 201, payload: values}
     }
 }
 
-export { request, download, searchuser, songinfo, comment, profileComment }
+async function deleteComment(username, password, levelID, commentID) {
+    let userinfo = await searchuser(username)
+    if (userinfo['code'] == 200) {
+        var accid = userinfo['payload']['accountID']
+    } else {
+        return {code: 400, payload: "User not found"}
+    }
+    let data = {
+        accountID: accid,
+        gjp: gjp(password),
+        commentID: commentID,
+        levelID: levelID,
+        secret: "Wmfd2893gb7"
+    }
+    let values = await request('http://www.boomlings.com/database/deleteGJComment20.php', data)
+    if (parseInt(values) == 1) {
+        return {code: 200, payload: "Comment deleted"}
+    } else {
+        return {code: 400, payload: "Invalid request"}
+    }
+}
+async function deleteAccountComment(username, password, commentID) {
+    let userinfo = await searchuser(username)
+    if (userinfo['code'] == 200) {
+        var accid = userinfo['payload']['accountID']
+    } else {
+        return {code: 400, payload: "User not found"}
+    }
+    let data = {
+        accountID: accid,
+        gjp: gjp(password),
+        commentID: commentID,
+        secret: "Wmfd2893gb7"
+    }
+    let values = await request('http://www.boomlings.com/database/deleteGJAccComment20.php', data)
+    if (parseInt(values) == 1) {
+        return {code: 200, payload: "Comment deleted"}
+    } else {
+        return {code: 400, payload: "Invalid request"}
+    }
+}
+    
+export { request, download, searchuser, songinfo, comment, profileComment, deleteComment, deleteAccountComment }

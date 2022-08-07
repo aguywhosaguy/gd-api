@@ -31,31 +31,67 @@ function b64(str, decodestr = true) {
 }
 function splitter(str, splitter) {
     let resp = splitter + str;
-    resp = resp.replaceAll(splitter, ':');
+    resp = resp.replaceAll(splitter, '?');
     let locations = []
     let even = true
     let values = {}
+    let nonsubstringvalues = []
 
-        let regex = /:/g
-        let colons = [...resp.matchAll(regex)];;
-        for (let j = 0; j < colons.length; j++) {
-            locations.push(colons[j].index)
+    let regex = /\?/g
+    let colons = [...resp.matchAll(regex)];;
+    for (let j = 0; j < colons.length; j++) {
+        locations.push(colons[j].index)
 
+    }
+    for (let j = 0; j < locations.length; j++) {
+        if (even) {
+            even = false
+        } else {
+            let colon = locations[j] + 1
+            let nextcolon = locations[j + 1]
+            let prevcolon = locations[j - 1] + 1
+            console.log(colon, nextcolon, prevcolon)
+            let value = parseInt(resp.substring(prevcolon, colon))
+            values[value] = resp.substring(colon, nextcolon)
+            even = true
         }
-        for (let j = 0; j < locations.length; j++) {
+    }
+    return values
+}
+
+function commentsplitter(str, multiple = false) {
+    let locations = []
+    let even = true
+    let values = []
+    let regex
+    if (multiple) {console.log(str)}
+    multiple ? regex = /\|/g : regex = /:/g
+    console.log(regex)
+    console.log(str)
+    console.log("split")
+    let colons = [...str.matchAll(regex)];;
+    for (let j = 0; j < colons.length; j++) {
+        locations.push(colons[j].index)
+
+    }
+    for (let j = 0; j < locations.length; j++) {
+        if (multiple) {
             if (even) {
                 even = false
             } else {
                 let colon = locations[j] + 1
-                let nextcolon = locations[j + 1]
                 let prevcolon = locations[j - 1] + 1
-                let value = parseInt(resp.substring(prevcolon, colon))
-                values[value] = resp.substring(colon, nextcolon)
+                values.push(str.substring(prevcolon, colon - 1))
                 even = true
             }
+        } else {
+            let colon = locations[j] + 1
+            values.push(str.substring(0, colon - 1))
+            values.push(str.substring(colon))
         }
+    }
     return values
-}
+}   
 function xor(strr, keyy, decodestr = true) {
     if (decodestr) {
         return decode(keyy, strr)
@@ -71,4 +107,4 @@ function gjp(password) {
     return xor(password, '37526', false)
 }
 
-export { zlib, b64, splitter, xor, chk, gjp }
+export { zlib, b64, splitter, xor, chk, gjp, commentsplitter }
