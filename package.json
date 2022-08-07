@@ -1,0 +1,13 @@
+{
+    "type": "module",
+    "dependencies": {
+        "axios": "^0.27.2",
+        "base-64": "^1.0.0",
+        "base64-xor": "^0.10.0",
+        "base64url": "^3.0.1",
+        "express": "^4.18.1",
+        "node-fetch": "^3.2.6",
+        "utf8": "^3.0.0",
+        "xor-crypt": "^1.1.1"
+    }
+}
