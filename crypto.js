@@ -50,7 +50,6 @@ function splitter(str, splitter) {
             let colon = locations[j] + 1
             let nextcolon = locations[j + 1]
             let prevcolon = locations[j - 1] + 1
-            console.log(colon, nextcolon, prevcolon)
             let value = parseInt(resp.substring(prevcolon, colon))
             values[value] = resp.substring(colon, nextcolon)
             even = true
@@ -64,15 +63,11 @@ function commentsplitter(str, multiple = false) {
     let even = true
     let values = []
     let regex
-    if (multiple) {console.log(str)}
     multiple ? regex = /\|/g : regex = /:/g
-    console.log(regex)
-    console.log(str)
-    console.log("split")
+    multiple ? str = "|" + str + "|" : str = str
     let colons = [...str.matchAll(regex)];;
     for (let j = 0; j < colons.length; j++) {
         locations.push(colons[j].index)
-
     }
     for (let j = 0; j < locations.length; j++) {
         if (multiple) {
@@ -82,7 +77,6 @@ function commentsplitter(str, multiple = false) {
                 let colon = locations[j] + 1
                 let prevcolon = locations[j - 1] + 1
                 values.push(str.substring(prevcolon, colon - 1))
-                even = true
             }
         } else {
             let colon = locations[j] + 1

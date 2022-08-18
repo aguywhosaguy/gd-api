@@ -12,6 +12,13 @@ app.get('/download', (req, res) => {
         res.send(data['payload']);
     })
 });
+app.get('/timely', (req, res) => {
+    requests.timely(req.query.type).then(data => {
+        res.statusCode = data['code'];
+        res.send(data['payload']);
+    }
+    )
+})
 app.get('/userInfo', (req, res) => {
     const username = req.query.username;
     requests.searchuser(username).then(data => {
@@ -26,6 +33,32 @@ app.get('/songInfo', (req, res) => {
         res.send(data['payload']);
     })
 });
+app.get('/commentHistory', (req, res) => {
+    const user = req.query.username;
+    const page = req.query.page;
+    const mode = req.query.mode;
+    requests.commentHistory(user, page, mode).then(data => {
+        res.statusCode = data['code'];
+        res.send(data['payload']);
+    })
+})
+app.get('/comments', (req, res) => {
+    const id = req.query.id;
+    const page = req.query.page;
+    const mode = req.query.mode;
+    requests.comments(id, page, mode).then(data => {
+        res.statusCode = data['code'];
+        res.send(data['payload']);
+    })
+})
+app.get('/profileComments', (req, res) => {
+    const user = req.query.username;
+    const page = req.query.page;
+    requests.profileComments(user, page).then(data => {
+        res.statusCode = data['code'];
+        res.send(data['payload']);
+    })
+})
 app.post('/postComment', (req, res) => {
     const username = req.query.username;
     const password = req.query.password;
@@ -64,6 +97,16 @@ app.delete('/deleteAccountComment', (req, res) => {
     const password = req.query.password;
     const cid = req.query.commentid;
     requests.deleteAccountComment(username, password, cid).then(data => {
+        res.statusCode = data['code'];
+        res.send(data['payload']);
+    })
+})
+app.get('/messages', (req, res) => {
+    const username = req.query.username;
+    const password = req.query.password;
+    const page = req.query.page;
+    const mode = req.query.mode;
+    requests.messages(username, password, page, mode).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })

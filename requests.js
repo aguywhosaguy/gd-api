@@ -1,4 +1,4 @@
-import { zlib, b64, splitter, xor, chk, gjp } from './crypto.js';
+import * as crypto from './crypto.js';
 import fetch from 'node-fetch'
 async function request(url, data) {
     let response = await fetch(url, {
@@ -21,13 +21,12 @@ async function songinfo(songid) {
         songID: songid,
         secret: "Wmfd2893gb7"
     }
-    console.log(songid)
     let values = await request('http://www.boomlings.com/database/getGJSongInfo.php', data)
     if (values == "-1") {
         return {code: 400, payload: {message: "Song not found"}}
     } else {
         values = values + "~|~"
-        values = splitter(values, "~|~")
+        values = crypto.splitter(values, "~|~")
         let payload = {}
         payload['songID'] = parseInt(songid)
         payload['songName'] = values[2]
@@ -227,7 +226,6 @@ const mainSongs = {
 }
 
 async function download(id) {
-    console.log(id)
     let data = {
         levelID: id,
         secret: "Wmfd2893gb7"
@@ -235,10 +233,10 @@ async function download(id) {
     let values = await request('http://www.boomlings.com/database/downloadGJLevel22.php', data)
     if (values != "-1") {
         let payload = {}
-        values = splitter(values, ":")
+        values = crypto.splitter(values, ":")
         payload['id'] = parseInt(values[1])
         payload['title'] = values[2]
-        b64(values[3]) == "" ? payload['description'] = "(No description provided)" : payload['description'] = b64(values[3])
+        crypto.b64(values[3]) == "" ? payload['description'] = "(No description provided)" : payload['description'] = crypto.b64(values[3])
         let creatordata = await searchuser(values[6])
         if (creatordata['code'] == 200) {
             payload['creator'] = creatordata['payload']['username']
@@ -401,7 +399,6 @@ async function download(id) {
         payload['objects'] == 40000 ? payload['large'] = true : payload['large'] = false
         if (parseInt(values[35])) {
             let sinfo = await songinfo(parseInt(values[35]))
-            console.log(sinfo['code'])
             if (sinfo['code'] == 200) {
                 payload['song'] = sinfo['payload']['songName']
                 payload['songID'] = parseInt(sinfo['payload']['songID'])
@@ -412,16 +409,12 @@ async function download(id) {
                 payload['songArtist'] = "-"
             }
         } else {
-            console.log(parseInt(values[12]))
             const songinfo = mainSongs[parseInt(values[12]) + 1]
-            console.log(songinfo)
             payload['song'] = songinfo['name']
             payload['songID'] = parseInt(songinfo['id'])
             payload['songArtist'] = songinfo['artist']
         }
-        console.log(values[27])
-        let passone = xor(values[27], "26364")
-        console.log(passone.substring(1, passone.length))
+        let passone = crypto.xor(values[27], "26364")
         parseInt(values[19]) == 0 ? payload['featured'] = false : payload['featured'] = true
         parseInt(values[42]) == 0 ? payload['epic'] = false : payload['epic'] = true
         parseInt(values[25]) == 1 ? payload['auto'] = true : payload['auto'] = false
@@ -429,7 +422,7 @@ async function download(id) {
         payload['copiedLevel'] = parseInt(values[30])
         payload['editorTime'] = parseInt(values[46])
         payload['editorTimeInCopies'] = parseInt(values[47])
-        xor(values[27], "26364") == "1" ? payload['password'] = 0 : payload['password'] = xor(values[27], "26364").substring(1, xor(values[27], "26364").length)
+        crypto.xor(values[27], "26364") == "1" ? payload['password'] = 0 : payload['password'] = crypto.xor(values[27], "26364").substring(1, crypto.xor(values[27], "26364").length)
         payload['uploadedAt'] = values[28]
         payload['updatedAt'] = values[29]
         return {code: 200, payload: payload}
@@ -439,7 +432,6 @@ async function download(id) {
 }
 
 async function searchuser(username) {
-    console.log(username)
     let accountid = false
     let failed = false
     let data = {
@@ -459,15 +451,14 @@ async function searchuser(username) {
     
     if (!failed) {
         if (!accountid) {
-            values = splitter(values, ":")
+            values = crypto.splitter(values, ":")
             data = {
                 targetAccountID: parseInt(values[16]),
                 secret: "Wmfd2893gb7"
             }
             values = await request('http://www.boomlings.com/database/getGJUserInfo20.php', data)
-            console.log(values)
         }
-        values = splitter(values, ":")
+        values = crypto.splitter(values, ":")
         let payload = {}
         payload['username'] = values[1]
         payload['userID'] = parseInt(values[2])
@@ -548,9 +539,8 @@ async function comment(username, password, comment, levelID, percent) {
     } else {
         return userinfo
     }
-    console.log(comment)
-    let bcomment = b64(comment, false)
-    password = gjp(password)
+    let bcomment = crypto.b64(comment, false)
+    password = crypto.gjp(password)
     let data = {
         accountID: accid,
         gjp: password,
@@ -558,10 +548,9 @@ async function comment(username, password, comment, levelID, percent) {
         comment: bcomment,
         levelID: levelID,
         percent: percent,
-        chk: chk([username, bcomment, levelID, percent, 0], "29481", "xPT6iUrtws0J"),
+        chk: crypto.chk([username, bcomment, levelID, percent, 0], "29481", "xPT6iUrtws0J"),
         secret: "Wmfd2893gb7"
     }
-    console.log(data)
     let values = await request('http://www.boomlings.com/database/uploadGJComment21.php', data)
     if (parseInt(values) == -1) {
         return {code: 400, payload: "Invalid request"}
@@ -578,13 +567,11 @@ async function profileComment(username, password, comment) {
     }
     let data = {
         accountID: accid,
-        gjp: gjp(password),
-        comment: b64(comment, false),
+        gjp: crypto.gjp(password),
+        comment: crypto.b64(comment, false),
         secret: "Wmfd2893gb7"
     }
-    console.log(data)
     let values = await request('http://www.boomlings.com/database/uploadGJAccComment20.php', data)
-    console.log("load" + values)
     if (parseInt(values) == -1) {
         return {code: 400, payload: "Invalid request"}
     } else {
@@ -601,7 +588,7 @@ async function deleteComment(username, password, levelID, commentID) {
     }
     let data = {
         accountID: accid,
-        gjp: gjp(password),
+        gjp: crypto.gjp(password),
         commentID: commentID,
         levelID: levelID,
         secret: "Wmfd2893gb7"
@@ -622,7 +609,7 @@ async function deleteAccountComment(username, password, commentID) {
     }
     let data = {
         accountID: accid,
-        gjp: gjp(password),
+        gjp: crypto.gjp(password),
         commentID: commentID,
         secret: "Wmfd2893gb7"
     }
@@ -633,5 +620,327 @@ async function deleteAccountComment(username, password, commentID) {
         return {code: 400, payload: "Invalid request"}
     }
 }
-    
-export { request, download, searchuser, songinfo, comment, profileComment, deleteComment, deleteAccountComment }
+
+async function commentHistory(username, page, mode = "recent") {
+    page = page - 1
+    if (mode == "recent") {
+        mode = 0
+    } else if (mode == "liked") {
+        mode = 1
+    }
+    let userinfo = await searchuser(username)
+    if (userinfo['code'] == 200) {
+        var usid = userinfo['payload']['userID']
+    } else {
+        return {code: 400, payload: "User not found or invalid comment history mode"}
+    }
+    let data = {
+        userID: usid,
+        page: page,
+        mode: mode,
+        secret: "Wmfd2893gb7"
+    }
+    let cvalues = await request('http://www.boomlings.com/database/getGJCommentHistory.php', data)
+    if (parseInt(cvalues) == -1) {
+        return {code: 400, payload: "Invalid request"}
+    } else {
+        let values = []
+        let arr = crypto.commentsplitter(cvalues, true)
+        let objs = []
+        for (let i = 0; i < arr.length; i++) {
+            let topush = []
+            let comment = crypto.commentsplitter(arr[i])
+            for (let j = 0; j < 2; j++) {
+                topush.push(crypto.splitter(comment[j], "~"))
+            }
+            objs.push(topush)
+        }
+        for (let i = 0; i < objs.length; i++) {
+            let topush = {}
+            let object = objs[i]
+            let comobj = object[0]
+            let userobj = object[1]
+            topush['levelID'] = parseInt(comobj[1])
+            let resp = await download(topush['levelID'])
+            if (resp['code'] == 200) {
+                topush['level'] = resp['payload']['title']
+            } else {
+                topush['level'] = "Level not found"
+            }
+            topush['comment'] = crypto.b64(comobj[2])
+            topush['likes'] = parseInt(comobj[4])
+            topush['username'] = userobj[1]
+            if (comobj[7]) {
+                topush['spam'] = true
+            } else {
+                topush['spam'] = false
+            }
+            topush['age'] = comobj[9]
+            topush['percent'] = parseInt(comobj[10])
+            switch (parseInt(comobj[11])) {
+                case 0:
+                    topush['moderatorStatus'] = "none"
+                    break;
+                case 1:
+                    topush['moderatorStatus'] = "moderator"
+                    break;
+                case 2:
+                    topush['moderatorStatus'] = "elder moderator"
+                    break;
+                default:
+                    topush['moderatorStatus'] = "none"
+                    break;
+            }
+            topush['icon'] = userobj[9]
+            topush['primaryColor'] = parseInt(userobj[10])
+            topush['secondaryColor'] = parseInt(userobj[11])
+            if (parseInt(userobj[15]) == 0) {
+                topush['glow'] = false
+            } else {
+                topush['glow'] = true
+            }
+            switch (parseInt(userobj[14])) {
+                case 0:
+                    topush['gamemode'] = "cube"
+                    break;
+                case 1:
+                    topush['gamemode'] = "ship"
+                    break;
+                case 2:
+                    topush['gamemode'] = "ball"
+                    break;
+                case 3:
+                    topush['gamemode'] = "ufo"
+                    break;
+                case 4:
+                    topush['gamemode'] = "wave"
+                    break;
+                case 5:
+                    topush['gamemode'] = "robot"
+                    break;
+                case 6:
+                    topush['gamemode'] = "spider"
+                    break;
+                default:
+                    topush['gamemode'] = "cube"
+                    break;
+            }
+            values.push(topush)
+        }
+        return {code: 200, payload: values}
+    }
+}
+
+async function comments(id, page, mode = "recent") {
+    page = page - 1
+    if (mode == "recent") {
+        mode = 0
+    } else if (mode == "liked") {
+        mode = 1
+    }
+    let data = {
+        levelID: id,
+        page: page,
+        mode: mode,
+        secret: "Wmfd2893gb7"
+    }
+    let cvalues = await request('http://www.boomlings.com/database/getGJComments21.php', data)
+    if (parseInt(cvalues) == -1) {
+        return {code: 400, payload: "Invalid request"}
+    } else {
+        let values = []
+        let arr = crypto.commentsplitter(cvalues, true)
+        let objs = []
+        for (let i = 0; i < arr.length; i++) {
+            let topush = []
+            let comment = crypto.commentsplitter(arr[i])
+            for (let j = 0; j < 2; j++) {
+                topush.push(crypto.splitter(comment[j], "~"))
+            }
+            objs.push(topush)
+        }
+        for (let i = 0; i < objs.length; i++) {
+            let topush = {}
+            let object = objs[i]
+            let comobj = object[0]
+            let userobj = object[1]
+            topush['levelID'] = id
+            let resp = await download(topush['levelID'])
+            if (resp['code'] == 200) {
+                topush['level'] = resp['payload']['title']
+            } else {
+                topush['level'] = "Level not found"
+            }
+            topush['comment'] = crypto.b64(comobj[2])
+            topush['likes'] = parseInt(comobj[4])
+            topush['username'] = userobj[1]
+            if (comobj[7]) {
+                topush['spam'] = true
+            } else {
+                topush['spam'] = false
+            }
+            topush['age'] = comobj[9]
+            topush['percent'] = parseInt(comobj[10])
+            switch (parseInt(comobj[11])) {
+                case 0:
+                    topush['moderatorStatus'] = "none"
+                    break;
+                case 1:
+                    topush['moderatorStatus'] = "moderator"
+                    break;
+                case 2:
+                    topush['moderatorStatus'] = "elder moderator"
+                    break;
+                default:
+                    topush['moderatorStatus'] = "none"
+                    break;
+            }
+            topush['icon'] = userobj[9]
+            topush['primaryColor'] = parseInt(userobj[10])
+            topush['secondaryColor'] = parseInt(userobj[11])
+            if (parseInt(userobj[15]) == 0) {
+                topush['glow'] = false
+            } else {
+                topush['glow'] = true
+            }
+            switch (parseInt(userobj[14])) {
+                case 0:
+                    topush['gamemode'] = "cube"
+                    break;
+                case 1:
+                    topush['gamemode'] = "ship"
+                    break;
+                case 2:
+                    topush['gamemode'] = "ball"
+                    break;
+                case 3:
+                    topush['gamemode'] = "ufo"
+                    break;
+                case 4:
+                    topush['gamemode'] = "wave"
+                    break;
+                case 5:
+                    topush['gamemode'] = "robot"
+                    break;
+                case 6:
+                    topush['gamemode'] = "spider"
+                    break;
+                default:
+                    topush['gamemode'] = "cube"
+                    break;
+            }
+            values.push(topush)
+        }
+        return {code: 200, payload: values}
+    }
+}
+
+async function profileComments(username, page) {
+    page = page - 1
+    let values = []
+    let userinfo = await searchuser(username)
+    if (userinfo['code'] == 200) {
+        let data = {
+            accountID: userinfo['payload']['accountID'],
+            page: page,
+            secret: "Wmfd2893gb7"
+        }
+        let cvalues = await request('http://www.boomlings.com/database/getGJAccountComments20.php', data)
+        if (parseInt(cvalues) == -1) {
+            return {code: 400, payload: "Invalid request"}
+        }
+        let split = crypto.commentsplitter(cvalues, true)
+        for (let i = 0; i < split.length; i++) {
+            let topush = {}
+            let comment = crypto.splitter(split[i], "~")
+            try {
+                topush["comment"] = crypto.b64(comment[2])
+            } catch (e) {
+                return {code: 400, payload: "Invalid request"}
+            }
+            topush["likes"] = parseInt(comment[4])
+            topush["age"] = comment[9]
+            topush["id"] = parseInt(comment[6])
+            values.push(topush)
+        }
+        console.log(values)
+        return {code: 200, payload: values}
+    } else {
+        return {code: 400, payload: "Invalid request"}
+    }
+}
+async function timely(type = "daily") {
+    type == "daily" ? type = 1 : type = 0
+    let data = {
+        weekly: type,
+        secret: "Wmfd2893gb7"
+    }
+    let cvalues = await request('http://www.boomlings.com/database/getGJDailyLevel.php', data)
+    let index = [...cvalues.matchAll(/\|/g)][0].index
+    if (parseInt(cvalues) == -1) {
+        return {code: 400, payload: "Invalid request"}
+    } else {
+        return {code: 200, payload: {id: parseInt(cvalues.substring(0, index)), secondsLeft: parseInt(cvalues.substring(index + 1))}}
+    }
+}
+async function messages(username, password, page = 1, mode = "received") {
+    page = page - 1
+    let accountID
+    if (mode == "received") {
+        mode = 0
+    } else if (mode == "sent") {
+        mode = 1
+    }
+    let userinfo = await searchuser(username)
+    if (userinfo['code'] == 200) {
+        accountID = userinfo['payload']['accountID']
+    } else {
+        return {code: 400, payload: "Invalid request"}
+    }
+    let data = {
+        accountID: accountID,
+        gjp: crypto.gjp(password),
+        page: page,
+        getSent: mode,
+        secret: "Wmfd2893gb7"
+    }
+    let cvalues = await request('http://www.boomlings.com/database/getGJMessages20.php', data)
+    if (parseInt(cvalues) == -1) {
+        return {code: 400, payload: "Invalid request"}
+    }
+    let split = crypto.commentsplitter(cvalues, true)
+
+    let values = []
+    for (let i = 0; i < split.length; i++) {
+        let topush = {}
+        let comment = crypto.splitter(split[i], ":")
+        data = {
+            accountID: accountID,
+            gjp: crypto.gjp(password),
+            messageID: parseInt(comment[1]),
+            secret: "Wmfd2893gb7"
+        }
+        console.log(data)
+        cvalues = await request('http://www.boomlings.com/database/downloadGJMessage20.php', data)
+        console.log(cvalues)
+        if (parseInt(cvalues) == -1) {
+            topush['message'] = "Invalid request"
+        } else {
+            console.log(cvalues)
+            comment = crypto.splitter(cvalues, ":")
+            console.log(comment)
+            topush["id"] = parseInt(comment[1])
+            topush["accountId"] = parseInt(comment[2])
+            topush["playerId"] = parseInt(comment[3])
+            topush["title"] = crypto.b64(comment[4])
+            topush["message"] = crypto.xor(comment[5] || "", 14251)
+            topush["username"] = comment[6]
+            topush["age"] = comment[7]
+            parseInt(comment[8]) == 0 ? topush["read"] = false : topush["read"] = true
+            parseInt(comment[9]) == 0 ? topush["sender"] = "receiving" : topush["sender"] = "sent"
+        }
+        values.push(topush)
+    }
+    return {code: 200, payload: values}
+}
+export { messages, request, download, searchuser, songinfo, comment, profileComment, deleteComment, deleteAccountComment, commentHistory, comments, profileComments, timely}
