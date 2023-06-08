@@ -3,11 +3,33 @@ import base64url from 'base64url';
 import utf8 from 'utf8';
 import pkg from 'base64-xor';
 import crypto from 'crypto';
+import fetch from 'node-fetch'
 const { encode, decode } = pkg;
+
+async function request(url, data) {
+    let response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'User-Agent': '',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams(data)
+    })
+    let text = await response.text()
+    return text
+}
+
+function b64(str, decodestr = true) {
+    if (decodestr) {
+        return base64url.decode(str)
+    } else {
+        return base64url.encode(str)
+    }
+}
 function zlib(str, decodestr = true) {
     //I do not know what any of this does but it works so :D
     if (decodestr) {
-        var strData = atob(str);
+        var strData = b64(str, false);
         var charData = strData.split('').map(function(x){return x.charCodeAt(0);});
         var binData = new Uint8Array(charData);
         var data = pako.inflate(binData);
@@ -18,44 +40,27 @@ function zlib(str, decodestr = true) {
         var charData = strData.split('').map(function(x){return x.charCodeAt(0);});
         var binData = new Uint8Array(charData);
         var data = pako.deflate(binData);
-        var strData = btoa(String.fromCharCode.apply(null, new Uint8Array(data)));
+        var strData = b64(String.fromCharCode.apply(null, new Uint8Array(data)));
         return strData
     }
 }
-function b64(str, decodestr = true) {
-    if (decodestr) {
-        return base64url.decode(str)
-    } else {
-        return base64url.encode(str)
-    }
-}
 function splitter(str, splitter) {
-    let resp = splitter + str;
-    resp = resp.replaceAll(splitter, '?');
-    let locations = []
-    let even = true
-    let values = {}
-    let nonsubstringvalues = []
-
-    let regex = /\?/g
-    let colons = [...resp.matchAll(regex)];;
-    for (let j = 0; j < colons.length; j++) {
-        locations.push(colons[j].index)
-
-    }
-    for (let j = 0; j < locations.length; j++) {
-        if (even) {
-            even = false
+    const split = str.split(splitter)
+    let ret = {}
+    let num = true
+    for (let j = 0; j < split.length; j++) {
+        if (num) {
+            const val = parseInt(split[j]) || null
+            if (!val) {
+                break
+            }
+            ret[val] = split[j + 1]
+            num = false
         } else {
-            let colon = locations[j] + 1
-            let nextcolon = locations[j + 1]
-            let prevcolon = locations[j - 1] + 1
-            let value = parseInt(resp.substring(prevcolon, colon))
-            values[value] = resp.substring(colon, nextcolon)
-            even = true
+            num = true
         }
     }
-    return values
+    return ret
 }
 
 function commentsplitter(str, multiple = false) {
@@ -101,4 +106,4 @@ function gjp(password) {
     return xor(password, '37526', false)
 }
 
-export { zlib, b64, splitter, xor, chk, gjp, commentsplitter }
+export { zlib, b64, splitter, xor, chk, gjp, commentsplitter, request }

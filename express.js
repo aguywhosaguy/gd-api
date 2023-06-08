@@ -1,112 +1,116 @@
-import * as requests from './requests.js';
+import * as comments from './endpoints/comments.js';
+import * as levels from './endpoints/levels.js';
+import * as misc from './endpoints/misc.js';
+import * as users from './endpoints/users.js';
+import * as messages from './endpoints/messages.js'
 import express from 'express';
 //"http://boomlings.com/database/downloadGJLevel22.php"
 //Wmfd2893gb7
 //81207780
 const app = express();
 const port = process.env.PORT || 3000;
-app.get('/download', (req, res) => {
+app.get('/levels/downloadLevel', (req, res) => {
     const id = req.query.id;
-    requests.download(id).then(data => {
+    levels.download(id).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 });
-app.get('/timely', (req, res) => {
-    requests.timely(req.query.type).then(data => {
+app.get('/misc/timely', (req, res) => {
+    misc.timely(req.query.type.toLowerCase()).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     }
     )
 })
-app.get('/userInfo', (req, res) => {
-    const username = req.query.username;
-    requests.searchuser(username).then(data => {
+app.get('/users/getUserInfo', (req, res) => {
+    const username = req.query.username.toLowerCase();
+    users.searchuser(username).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 });
-app.get('/songInfo', (req, res) => {
+app.get('/misc/getSongInfo', (req, res) => {
     const id = req.query.songid;
-    requests.songinfo(id).then(data => {
+    misc.songinfo(id).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 });
-app.get('/commentHistory', (req, res) => {
-    const user = req.query.username;
+app.get('/comments/getCommentHistory', (req, res) => {
+    const user = req.query.username.toLowerCase();
     const page = req.query.page;
-    const mode = req.query.mode;
-    requests.commentHistory(user, page, mode).then(data => {
+    const mode = req.query.mode.toLowerCase();
+    comments.commentHistory(user, page, mode).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 })
-app.get('/comments', (req, res) => {
+app.get('/comments/getComments', (req, res) => {
     const id = req.query.id;
     const page = req.query.page;
-    const mode = req.query.mode;
-    requests.comments(id, page, mode).then(data => {
+    const mode = req.query.mode.toLowerCase();
+    comments.comments(id, page, mode).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 })
-app.get('/profileComments', (req, res) => {
-    const user = req.query.username;
+app.get('/comments/getProfileComments', (req, res) => {
+    const user = req.query.username.toLowerCase();
     const page = req.query.page;
-    requests.profileComments(user, page).then(data => {
+    comments.profileComments(user, page).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 })
-app.post('/postComment', (req, res) => {
-    const username = req.query.username;
-    const password = req.query.password;
-    const content = req.query.content;
+app.post('/comments/postComment', (req, res) => {
+    const username = req.query.username.toLowerCase();
+    const password = req.query.password.toLowerCase();
+    const content = req.query.content.toLowerCase();
     const id = req.query.id;
     const percent = req.query.percent || 0;
-    requests.comment(username, password, content, id, percent).then(data => {
+    comments.comment(username, password, content, id, percent).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 });
 
-app.post('/postProfileComment', (req, res) => {
-    const username = req.query.username;
-    const password = req.query.password;
-    const content = req.query.content;
-    requests.profileComment(username, password, content).then(data => {
+app.post('/comments/postProfileComment', (req, res) => {
+    const username = req.query.username.toLowerCase();
+    const password = req.query.password.toLowerCase();
+    const content = req.query.content.toLowerCase();
+    comments.profileComment(username, password, content).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 }
 );
 
-app.delete('/deleteComment', (req, res) => {
-    const username = req.query.username;
-    const password = req.query.password;
+app.delete('/comments/deleteComment', (req, res) => {
+    const username = req.query.username.toLowerCase();
+    const password = req.query.password.toLowerCase();
     const cid = req.query.commentid;
     const lid = req.query.levelid;
-    requests.deleteComment(username, password, lid, cid).then(data => {
+    comments.deleteComment(username, password, lid, cid).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 })
-app.delete('/deleteAccountComment', (req, res) => {
-    const username = req.query.username;
-    const password = req.query.password;
+app.delete('/comments/deleteAccountComment', (req, res) => {
+    const username = req.query.username.toLowerCase();
+    const password = req.query.password.toLowerCase();
     const cid = req.query.commentid;
-    requests.deleteAccountComment(username, password, cid).then(data => {
+    comments.deleteAccountComment(username, password, cid).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
 })
-app.get('/messages', (req, res) => {
-    const username = req.query.username;
-    const password = req.query.password;
+app.get('/messages/getMessages', (req, res) => {
+    const username = req.query.username.toLowerCase();
+    const password = req.query.password.toLowerCase();
     const page = req.query.page;
-    const mode = req.query.mode;
-    requests.messages(username, password, page, mode).then(data => {
+    const mode = req.query.mode.toLowerCase();
+    messages.messages(username, password, page, mode).then(data => {
         res.statusCode = data['code'];
         res.send(data['payload']);
     })
